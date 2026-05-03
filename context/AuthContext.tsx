@@ -1,89 +1,159 @@
-import { createContext, useContext, useState } from "react";
-import * as SecureStore from "expo-secure-store";
-import { instance, setAuthToken } from "../api/api";
-import Toast from "react-native-toast-message";
 import { useRouter } from "expo-router";
+import {
+  createContext,
+  useContext,
+  useState,
+} from "react";
+import Toast from "react-native-toast-message";
+
+import {
+  instance,
+  setAuthToken,
+} from "@/api/api";
+import { removeItem, saveItem } from "@/utils/secureStorage";
 
 const AuthContext = createContext<any>(null);
 
-export const AuthProvider = ({ children }: any) => {
-  const [token, setToken] = useState<string | null>(null);
+export const AuthProvider = ({
+  children,
+}: any) => {
+  const [token, setToken] =
+    useState<string | null>(null);
+
+  const [pendingEmail, setPendingEmail] =
+    useState<string>("");
+
   const router = useRouter();
 
-  const login = async (email: string, password: string) => {
+  const login = async (
+    email: string,
+    password: string
+  ) => {
     try {
-      const res = await instance.post("/auth/login", { email, password });
+      const res = await instance.post(
+        "/auth/login",
+        {
+          email,
+          password,
+        }
+      );
 
-      const { accessToken, refreshToken } = res.data;
+      const accessToken =
+        res?.data?.accessToken;
 
-      await SecureStore.setItemAsync("refreshToken", refreshToken);
+      const refreshToken =
+        res?.data?.refreshToken;
+
+      if (!accessToken || !refreshToken) {
+        throw new Error(
+          "Tokens missing from response"
+        );
+      }
+
+      await saveItem(
+        "refreshToken",
+        refreshToken
+      );
 
       setToken(accessToken);
       setAuthToken(accessToken);
 
       Toast.show({
         type: "success",
-        text1: "Login Successful 🎉"
+        text1:res?.data?.message || "Login Successful 🎉",
       });
 
-      router.replace("/(protected)/home");
-
+      router.replace(
+        "/(protected)/home"
+      );
     } catch (err: any) {
+      console.log(
+        "LOGIN ERROR:",
+        err
+      );
+
       Toast.show({
         type: "error",
-        text1: err?.response?.data?.msg || "Login failed"
+        text1:
+          err?.response?.data?.message ||
+          err?.message ||
+          "Login failed",
       });
     }
   };
 
-  const signup = async (fullName: string, email: string, password: string) => {
+  const signup = async (
+    fullName: string,
+    email: string,
+    password: string
+  ) => {
     try {
-      const res = await instance.post("/auth/signup", {
-        fullName,
-        email,
-        password
-      });
-
-      const { accessToken, refreshToken } = res.data;
-
-      await SecureStore.setItemAsync("refreshToken", refreshToken);
-
-      setToken(accessToken);
-      setAuthToken(accessToken);
+      const res = await instance.post(
+        "/auth/signup",
+        {
+          fullName,
+          email,
+          password,
+        }
+      );
 
       Toast.show({
         type: "success",
-        text1: "Signup Successful 🎉"
+        text1:
+          res?.data?.message ||
+          "OTP sent to your email 📩",
       });
 
-      router.replace("/(protected)/home");
+      setPendingEmail(email);
 
+      router.push(
+        "/(auth)/verify-otp"
+      );
     } catch (err: any) {
       Toast.show({
         type: "error",
-        text1: err?.response?.data?.msg || "Signup failed"
+        text1:
+          err?.response?.data?.message ||
+          "Signup failed",
       });
     }
   };
 
   const logout = async () => {
-    await SecureStore.deleteItemAsync("refreshToken");
+    await removeItem(
+      "refreshToken"
+    );
+
     setToken(null);
     setAuthToken(null);
+    setPendingEmail("");
 
     Toast.show({
       type: "success",
-      text1: "Logged out"
+      text1: "Logged out",
     });
 
-    router.replace("/(auth)/login");
+    router.replace(
+      "/(auth)/login"
+    );
   };
 
   return (
-    <AuthContext.Provider value={{ token, login, signup, logout }}>
+    <AuthContext.Provider
+      value={{
+        token,
+        login,
+        signup,
+        logout,
+        pendingEmail,
+        setPendingEmail,
+        setToken
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () =>
+  useContext(AuthContext);

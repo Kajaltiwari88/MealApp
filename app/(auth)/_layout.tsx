@@ -1,14 +1,14 @@
 import { Stack } from "expo-router";
-import PrivateRoute from "@/routes/PrivateRoute";
+import PublicRoute from "@/routes/PublicRoute";
 
-export default function ProtectedLayout() {
+export default function AuthLayout() {
   return (
-    <PrivateRoute>
+    <PublicRoute>
       <Stack
         screenOptions={{
           headerShown: false,
         }}
       />
-    </PrivateRoute>
+    </PublicRoute>
   );
 }
