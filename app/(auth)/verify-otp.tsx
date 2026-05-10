@@ -1,9 +1,4 @@
-import { instance } from "@/api/api";
-import ThemeToggle from "@/components/ThemeToggle";
-import { useAuth } from "@/context/AuthContext";
-import { useThemeContext } from "@/context/ThemeContext";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -12,32 +7,40 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import Toast from "react-native-toast-message";
+  ImageBackground,
+} from 'react-native';
+
+import { useRouter } from 'expo-router';
+import Toast from 'react-native-toast-message';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { LinearGradient } from 'expo-linear-gradient';
+
+import { instance } from '@/api/api';
+import { useAuth } from '@/context/AuthContext';
 
 export default function VerifyOtpScreen() {
-  const { theme } = useThemeContext();
   const router = useRouter();
   const { pendingEmail } = useAuth();
 
-  const [otp, setOtp] = useState("");
+  const [otp, setOtp] =
+    useState<string>('');
+
   const [loading, setLoading] =
-    useState(false);
+    useState<boolean>(false);
 
   const handleVerifyOtp = async () => {
     if (!otp.trim()) {
       Toast.show({
-        type: "error",
-        text1: "OTP is required",
+        type: 'error',
+        text1: 'OTP is required',
       });
       return;
     }
 
     if (otp.length !== 6) {
       Toast.show({
-        type: "error",
-        text1: "OTP must be 6 digits",
+        type: 'error',
+        text1: 'OTP must be 6 digits',
       });
       return;
     }
@@ -46,7 +49,7 @@ export default function VerifyOtpScreen() {
       setLoading(true);
 
       await instance.post(
-        "/auth/verify-otp",
+        '/auth/verify-otp',
         {
           email: pendingEmail,
           otp,
@@ -54,18 +57,18 @@ export default function VerifyOtpScreen() {
       );
 
       Toast.show({
-        type: "success",
+        type: 'success',
         text1:
-          "Email verified successfully 🎉",
+          'Email verified successfully 🎉',
       });
 
-      router.replace("/(auth)/login");
+      router.replace('/(auth)/login');
     } catch (err: any) {
       Toast.show({
-        type: "error",
+        type: 'error',
         text1:
           err?.response?.data?.message ||
-          "OTP verification failed",
+          'OTP verification failed',
       });
     } finally {
       setLoading(false);
@@ -73,127 +76,180 @@ export default function VerifyOtpScreen() {
   };
 
   return (
-    <KeyboardAwareScrollView
-      style={[
-        styles.wrapper,
-        {
-          backgroundColor: theme.bg,
-        },
-      ]}
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
-      enableOnAndroid={true}
-      extraScrollHeight={
-        Platform.OS === "ios" ? 20 : 80
-      }
+    <ImageBackground
+      source={{
+        uri: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061',
+      }}
+      style={styles.bg}
+      resizeMode="cover"
     >
-      <View style={styles.top}>
-        <ThemeToggle />
-      </View>
-
-      <Text
-        style={[
-          styles.title,
-          {
-            color: theme.text,
-          },
+      <LinearGradient
+        colors={[
+          'rgba(0,0,0,0.2)',
+          'rgba(0,0,0,0.85)',
         ]}
+        style={styles.overlay}
       >
-        Verify OTP 🔐
-      </Text>
-
-      <View
-        style={[
-          styles.inputBox,
-          {
-            backgroundColor: theme.card,
-          },
-        ]}
-      >
-        <TextInput
-          placeholder="Enter OTP"
-          placeholderTextColor={
-            theme.subText
+        <KeyboardAwareScrollView
+          contentContainerStyle={
+            styles.container
           }
-          value={otp}
-          onChangeText={setOtp}
-          keyboardType="number-pad"
-          style={[
-            styles.input,
-            {
-              color: theme.text,
-            },
-          ]}
-        />
-      </View>
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          enableOnAndroid={true}
+          extraScrollHeight={
+            Platform.OS === 'ios'
+              ? 20
+              : 80
+          }
+        >
+          <View style={styles.card}>
+            <Text style={styles.logo}>
+              NutriChef 🍽️
+            </Text>
 
-      <TouchableOpacity
-        style={[
-          styles.button,
-          {
-            backgroundColor: theme.primary,
-          },
-        ]}
-        onPress={handleVerifyOtp}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>
-            Verify OTP
-          </Text>
-        )}
-      </TouchableOpacity>
-    </KeyboardAwareScrollView>
+            <Text style={styles.title}>
+              Verify OTP 🔐
+            </Text>
+
+            <Text style={styles.subtitle}>
+              Enter the 6-digit OTP sent
+              to your email
+            </Text>
+
+            <View style={styles.inputBox}>
+              <TextInput
+                placeholder="Enter OTP"
+                placeholderTextColor="#999"
+                value={otp}
+                onChangeText={setOtp}
+                keyboardType="number-pad"
+                maxLength={6}
+                style={styles.input}
+                underlineColorAndroid="transparent"
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleVerifyOtp}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>
+                  Verify OTP
+                </Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() =>
+                router.replace('/(auth)/login')
+              }
+            >
+              <Text style={styles.link}>
+                Back to{' '}
+                <Text style={styles.linkBold}>
+                  Login
+                </Text>
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAwareScrollView>
+      </LinearGradient>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
+  bg: {
     flex: 1,
+  },
+
+  overlay: {
+    flex: 1,
+    justifyContent: 'center',
   },
 
   container: {
     flexGrow: 1,
-    justifyContent: "center",
+    justifyContent: 'center',
     padding: 24,
   },
 
-  top: {
-    position: "absolute",
-    top: 60,
-    right: 20,
-    zIndex: 10,
+  card: {
+    backgroundColor:
+      'rgba(255,255,255,0.12)',
+    borderRadius: 28,
+    padding: 28,
+    borderWidth: 1,
+    borderColor:
+      'rgba(255,255,255,0.18)',
+  },
+
+  logo: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#fff',
+    textAlign: 'center',
   },
 
   title: {
     fontSize: 28,
-    fontWeight: "700",
-    marginBottom: 20,
+    fontWeight: '700',
+    color: '#fff',
+    marginTop: 20,
+  },
+
+  subtitle: {
+    fontSize: 14,
+    color: '#ddd',
+    marginTop: 8,
+    marginBottom: 24,
+    lineHeight: 22,
   },
 
   inputBox: {
+    backgroundColor: '#fff',
     borderRadius: 16,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    height: 56,
+    justifyContent: 'center',
+    borderWidth: 0,
+    elevation: 0,
+    shadowOpacity: 0,
   },
 
   input: {
     fontSize: 16,
+    color: '#111',
   },
 
   button: {
-    marginTop: 30,
+    marginTop: 28,
+    backgroundColor: '#22C55E',
     paddingVertical: 16,
-    borderRadius: 16,
-    alignItems: "center",
+    borderRadius: 18,
+    alignItems: 'center',
   },
 
   buttonText: {
-    color: "#fff",
-    fontWeight: "600",
+    color: '#fff',
     fontSize: 16,
+    fontWeight: '700',
+  },
+
+  link: {
+    marginTop: 22,
+    textAlign: 'center',
+    color: '#ddd',
+  },
+
+  linkBold: {
+    color: '#22C55E',
+    fontWeight: '700',
   },
 });
+

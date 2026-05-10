@@ -7,296 +7,231 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ImageBackground,
 } from "react-native";
 
 import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
-
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { LinearGradient } from "expo-linear-gradient";
 
-import ThemeToggle from "@/components/ThemeToggle";
 import { useAuth } from "@/context/AuthContext";
-import { useThemeContext } from "@/context/ThemeContext";
-import { useLoginMutation } from "@/store/services/authApi";
-import { saveItem } from "@/utils/secureStorage";
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { setToken } = useAuth();
-  const { theme } = useThemeContext();
+  const { login } = useAuth();
 
-  const [login, { isLoading }] =
-    useLoginMutation();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const [form, setForm] = useState({
     email: "",
     password: "",
   });
 
+  const handleLogin = async () => {
+    if (!form?.email?.trim()) {
+      Toast.show({
+        type: "error",
+        text1: "Email is required",
+      });
+      return;
+    }
 
-const handleLogin = async () => {
-  if (!form?.email?.trim()) {
-    Toast.show({
-      type: "error",
-      text1: "Email is required",
-    });
-    return;
-  }
+    if (!form?.password?.trim()) {
+      Toast.show({
+        type: "error",
+        text1: "Password is required",
+      });
+      return;
+    }
 
-  if (!form?.password?.trim()) {
-    Toast.show({
-      type: "error",
-      text1: "Password is required",
-    });
-    return;
-  }
+    try {
+      setIsLoading(true);
 
-  try {
-    const res = await login({
-      email: form?.email,
-      password: form?.password,
-    }).unwrap();
-
-    await saveItem(
-      "accessToken",
-      res?.accessToken
-    );
-
-    await saveItem(
-      "refreshToken",
-      res?.refreshToken
-    );
-
-    setToken(res?.accessToken);
-
-    Toast.show({
-      type: "success",
-      text1: res?.data?.message || "Login Successful 🎉",
-    });
-
-    router.replace(
-      "/(protected)/home"
-    );
-  } catch (err: any) {
-    Toast.show({
-      type: "error",
-      text1:
-        err?.data?.message ||
-        "Login failed",
-    });
-  }
-};
+      await login(form.email, form.password);
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: error?.message || "Login failed",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <KeyboardAwareScrollView
-      style={[
-        styles.wrapper,
-        {
-          backgroundColor:
-            theme.bg,
-        },
-      ]}
-      contentContainerStyle={
-        styles.container
-      }
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
-      enableOnAndroid={true}
-      extraScrollHeight={
-        Platform.OS === "ios"
-          ? 20
-          : 80
-      }
+    <ImageBackground
+      source={{
+        uri: "https://images.unsplash.com/photo-1498837167922-ddd27525d352",
+      }}
+      style={styles.bg}
+      resizeMode="cover"
     >
-      <View style={styles.top}>
-        <ThemeToggle />
-      </View>
-
-      {/* Title */}
-      <Text
-        style={[
-          styles.title,
-          {
-            color: theme.text,
-          },
-        ]}
+      <LinearGradient
+        colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0.85)"]}
+        style={styles.overlay}
       >
-        Welcome Back 👋
-      </Text>
-
-      <View
-        style={[
-          styles.inputBox,
-          {
-            backgroundColor:
-              theme.card,
-          },
-        ]}
-      >
-        <TextInput
-          placeholder="EMAIL"
-          placeholderTextColor={
-            theme.subText
-          }
-          value={form.email}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          onChangeText={(value) =>
-            setForm({
-              ...form,
-              email: value,
-            })
-          }
-          style={[
-            styles.input,
-            {
-              color: theme.text,
-            },
-          ]}
-        />
-      </View>
-
-      <View
-        style={[
-          styles.inputBox,
-          {
-            backgroundColor:
-              theme.card,
-          },
-        ]}
-      >
-        <TextInput
-          placeholder="PASSWORD"
-          placeholderTextColor={
-            theme.subText
-          }
-          secureTextEntry
-          value={form.password}
-          onChangeText={(value) =>
-            setForm({
-              ...form,
-              password: value,
-            })
-          }
-          style={[
-            styles.input,
-            {
-              color: theme.text,
-            },
-          ]}
-        />
-      </View>
-
-      <TouchableOpacity
-        style={[
-          styles.button,
-          {
-            backgroundColor:
-              theme.primary,
-          },
-        ]}
-        onPress={handleLogin}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <ActivityIndicator
-            color="#fff"
-          />
-        ) : (
-          <Text
-            style={styles.buttonText}
-          >
-            Login
-          </Text>
-        )}
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        onPress={() =>
-          router.push(
-            "/(auth)/signup"
-          )
-        }
-      >
-        <Text
-          style={[
-            styles.link,
-            {
-              color:
-                theme.subText,
-            },
-          ]}
+        <KeyboardAwareScrollView
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          enableOnAndroid={true}
+          extraScrollHeight={Platform.OS === "ios" ? 20 : 80}
         >
-          Don’t have an account?{" "}
-          <Text
-            style={{
-              color:
-                theme.primary,
-            }}
-          >
-            Signup
-          </Text>
-        </Text>
-      </TouchableOpacity>
-    </KeyboardAwareScrollView>
+          <View style={styles.card}>
+            <Text style={styles.logo}>NutriChef 🍽️</Text>
+
+            <Text style={styles.title}>Welcome Back</Text>
+
+            <Text style={styles.subtitle}>
+              Login and continue your healthy journey
+            </Text>
+
+            <View style={styles.inputBox}>
+              <TextInput
+                placeholder="Email"
+                placeholderTextColor="#999"
+                value={form.email}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                onChangeText={(value) =>
+                  setForm({
+                    ...form,
+                    email: value,
+                  })
+                }
+                style={styles.input}
+                underlineColorAndroid="transparent"
+              />
+            </View>
+
+            <View style={styles.inputBox}>
+              <TextInput
+                placeholder="Password"
+                placeholderTextColor="#999"
+                secureTextEntry
+                value={form.password}
+                onChangeText={(value) =>
+                  setForm({
+                    ...form,
+                    password: value,
+                  })
+                }
+                style={styles.input}
+                underlineColorAndroid="transparent"
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleLogin}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Login</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
+              <Text style={styles.link}>
+                Don't have an account?{" "}
+                <Text style={styles.linkBold}>Signup</Text>
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAwareScrollView>
+      </LinearGradient>
+    </ImageBackground>
   );
 }
 
-const styles =
-  StyleSheet.create({
-    wrapper: {
-      flex: 1,
-    },
+const styles = StyleSheet.create({
+  bg: {
+    flex: 1,
+  },
 
-    container: {
-      flexGrow: 1,
-      justifyContent:
-        "center",
-      padding: 24,
-    },
+  overlay: {
+    flex: 1,
+    justifyContent: "center",
+  },
 
-    top: {
-      position:
-        "absolute",
-      top: 60,
-      right: 20,
-      zIndex: 10,
-    },
+  container: {
+    flexGrow: 1,
+    justifyContent: "center",
+    padding: 24,
+  },
 
-    title: {
-      fontSize: 28,
-      fontWeight: "700",
-      marginBottom: 20,
-    },
+  card: {
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderRadius: 28,
+    padding: 28,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
+  },
 
-    inputBox: {
-      marginTop: 16,
-      borderRadius: 16,
-      paddingHorizontal: 16,
-      paddingVertical: 14,
-    },
+  logo: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#fff",
+    textAlign: "center",
+  },
 
-    input: {
-      fontSize: 16,
-    },
+  title: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#fff",
+    marginTop: 20,
+  },
 
-    button: {
-      marginTop: 30,
-      paddingVertical: 16,
-      borderRadius: 16,
-      alignItems:
-        "center",
-    },
+  subtitle: {
+    fontSize: 14,
+    color: "#ddd",
+    marginTop: 8,
+    marginBottom: 24,
+  },
 
-    buttonText: {
-      color: "#fff",
-      fontWeight: "600",
-      fontSize: 16,
-    },
+  inputBox: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    marginTop: 16,
+    height: 56,
+    justifyContent: "center",
 
-    link: {
-      marginTop: 20,
-      textAlign:
-        "center",
-    },
-  });
+    borderWidth: 0,
+    elevation: 0,
+    shadowOpacity: 0,
+  },
+
+  input: {
+    fontSize: 16,
+    color: "#111",
+  },
+
+  button: {
+    marginTop: 28,
+    backgroundColor: "#22C55E",
+    paddingVertical: 16,
+    borderRadius: 18,
+    alignItems: "center",
+  },
+
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+
+  link: {
+    marginTop: 22,
+    textAlign: "center",
+    color: "#ddd",
+  },
+
+  linkBold: {
+    color: "#22C55E",
+    fontWeight: "700",
+  },
+});

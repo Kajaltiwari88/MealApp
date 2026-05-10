@@ -1,7 +1,26 @@
-import LandingScreen from "@/screens/landingpage";
+import React from 'react';
+import { Redirect } from 'expo-router';
 
-export default function Page() {
+import LandingScreen from '@/screens/landingpage';
+import { useAuth } from '@/context/AuthContext';
+
+export default function Index() {
+  const {
+    token,
+    loading,
+  } = useAuth();
+
+  if (loading) {
+    return null;
+  }
+
+  if (token) {
     return (
-        <LandingScreen />
+      <Redirect
+        href="/(protected)/home"
+      />
     );
+  }
+
+  return <LandingScreen />;
 }

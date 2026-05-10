@@ -6,26 +6,32 @@ import * as SecureStore from "expo-secure-store";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const saveItem =
-  async (
-    key: string,
-    value: string
-  ) => {
-    if (
-      Platform.OS ===
-      "web"
-    ) {
-      await AsyncStorage.setItem(
-        key,
-        value
-      );
-    } else {
-      await SecureStore.setItemAsync(
-        key,
-        value
-      );
-    }
-  };
+export const saveItem = async (
+  key: string,
+  value: string
+) => {
+  if (
+    value === undefined ||
+    value === null
+  ) {
+    return;
+  }
+
+  const finalValue =
+    String(value);
+
+  if (Platform.OS === 'web') {
+    await AsyncStorage.setItem(
+      key,
+      finalValue
+    );
+  } else {
+    await SecureStore.setItemAsync(
+      key,
+      finalValue
+    );
+  }
+};
 
 export const getItem =
   async (

@@ -1,29 +1,60 @@
-import { useRouter } from "expo-router";
+import { useRouter } from 'expo-router';
 import {
   createContext,
   useContext,
+  useEffect,
   useState,
-} from "react";
-import Toast from "react-native-toast-message";
+} from 'react';
+
+import Toast from 'react-native-toast-message';
 
 import {
   instance,
   setAuthToken,
-} from "@/api/api";
-import { removeItem, saveItem } from "@/utils/secureStorage";
+} from '@/api/api';
+
+import {
+  getItem,
+  removeItem,
+  saveItem,
+} from '@/utils/secureStorage';
 
 const AuthContext = createContext<any>(null);
 
-export const AuthProvider = ({
-  children,
-}: any) => {
-  const [token, setToken] =
-    useState<string | null>(null);
-
-  const [pendingEmail, setPendingEmail] =
-    useState<string>("");
-
+export const AuthProvider = ({ children }: any) => {
   const router = useRouter();
+  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [pendingEmail, setPendingEmail] =
+    useState<string>('');
+
+  useEffect(() => {
+    restoreSession();
+  }, []);
+
+  const restoreSession = async () => {
+    try {
+      const savedToken =
+        await getItem("accessToken");
+
+      const savedUser =
+        await getItem("user");
+
+      if (savedToken) {
+        setToken(savedToken);
+        setAuthToken(savedToken);
+      }
+
+      if (savedUser) {
+        setUser(JSON.parse(savedUser));
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const login = async (
     email: string,
@@ -31,7 +62,7 @@ export const AuthProvider = ({
   ) => {
     try {
       const res = await instance.post(
-        "/auth/login",
+        '/auth/login',
         {
           email,
           password,
@@ -39,45 +70,51 @@ export const AuthProvider = ({
       );
 
       const accessToken =
-        res?.data?.accessToken;
+        res?.data?.accessToken || '';
 
       const refreshToken =
-        res?.data?.refreshToken;
+        res?.data?.refreshToken || '';
 
-      if (!accessToken || !refreshToken) {
+      const userData =
+        res?.data?.user || {};
+
+      if (!accessToken) {
         throw new Error(
-          "Tokens missing from response"
+          'Access token missing'
         );
       }
 
       await saveItem(
-        "refreshToken",
-        refreshToken
+        'accessToken',
+        String(accessToken)
+      );
+
+      await saveItem(
+        'refreshToken',
+        String(refreshToken)
+      );
+
+      await saveItem(
+        'user',
+        JSON.stringify(userData)
       );
 
       setToken(accessToken);
+      setUser(userData);
       setAuthToken(accessToken);
 
       Toast.show({
-        type: "success",
-        text1:res?.data?.message || "Login Successful 🎉",
+        type: 'success',
+        text1: 'Login Successful 🎉',
       });
 
-      router.replace(
-        "/(protected)/home"
-      );
-    } catch (err: any) {
-      console.log(
-        "LOGIN ERROR:",
-        err
-      );
-
+    } catch (error: any) {
       Toast.show({
-        type: "error",
+        type: 'error',
         text1:
-          err?.response?.data?.message ||
-          err?.message ||
-          "Login failed",
+          error?.message ||
+          error?.response?.data?.message ||
+          'Login failed',
       });
     }
   };
@@ -89,7 +126,7 @@ export const AuthProvider = ({
   ) => {
     try {
       const res = await instance.post(
-        "/auth/signup",
+        '/auth/signup',
         {
           fullName,
           email,
@@ -98,56 +135,48 @@ export const AuthProvider = ({
       );
 
       Toast.show({
-        type: "success",
+        type: 'success',
         text1:
           res?.data?.message ||
-          "OTP sent to your email 📩",
+          'OTP sent to your email 📩',
       });
 
       setPendingEmail(email);
 
-      router.push(
-        "/(auth)/verify-otp"
-      );
-    } catch (err: any) {
+      router.push('/(auth)/verify-otp');
+
+    } catch (error: any) {
       Toast.show({
-        type: "error",
+        type: 'error',
         text1:
-          err?.response?.data?.message ||
-          "Signup failed",
+          error?.response?.data?.message ||
+          'Signup failed',
       });
     }
   };
-
   const logout = async () => {
-    await removeItem(
-      "refreshToken"
-    );
+    await removeItem('accessToken');
+    await removeItem('refreshToken');
+    await removeItem('user');
 
     setToken(null);
+    setUser(null);
     setAuthToken(null);
-    setPendingEmail("");
 
-    Toast.show({
-      type: "success",
-      text1: "Logged out",
-    });
-
-    router.replace(
-      "/(auth)/login"
-    );
+    router.replace('/(auth)/login');
   };
 
   return (
     <AuthContext.Provider
       value={{
         token,
+        user,
+        loading,
         login,
-        signup,
         logout,
+        signup,
         pendingEmail,
-        setPendingEmail,
-        setToken
+        setPendingEmail
       }}
     >
       {children}
@@ -155,5 +184,4 @@ export const AuthProvider = ({
   );
 };
 
-export const useAuth = () =>
-  useContext(AuthContext);
+export const useAuth = () => useContext(AuthContext);

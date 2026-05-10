@@ -1,8 +1,4 @@
-import ThemeToggle from "@/components/ThemeToggle";
-import { useAuth } from "@/context/AuthContext";
-import { useThemeContext } from "@/context/ThemeContext";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -11,42 +7,49 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import Toast from "react-native-toast-message";
+  ImageBackground,
+} from 'react-native';
+
+import { useRouter } from 'expo-router';
+import Toast from 'react-native-toast-message';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { LinearGradient } from 'expo-linear-gradient';
+
+import { useAuth } from '@/context/AuthContext';
 
 type SignupForm = {
-  name: string;
+  fullName: string;
   email: string;
   password: string;
 };
 
 export default function SignupScreen() {
-  const { theme } = useThemeContext();
   const { signup } = useAuth();
   const router = useRouter();
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] =
+    useState(false);
 
-  const [form, setForm] = useState<SignupForm>({
-    name: "",
-    email: "",
-    password: "",
-  });
+  const [form, setForm] =
+    useState<SignupForm>({
+      fullName: '',
+      email: '',
+      password: '',
+    });
 
   const handleSignup = async () => {
-    if (!form.name.trim()) {
+    if (!form.fullName.trim()) {
       Toast.show({
-        type: "error",
-        text1: "Full name is required",
+        type: 'error',
+        text1: 'Full name is required',
       });
       return;
     }
 
     if (!form.email.trim()) {
       Toast.show({
-        type: "error",
-        text1: "Email is required",
+        type: 'error',
+        text1: 'Email is required',
       });
       return;
     }
@@ -56,25 +59,25 @@ export default function SignupScreen() {
 
     if (!emailRegex.test(form.email)) {
       Toast.show({
-        type: "error",
-        text1: "Enter valid email",
+        type: 'error',
+        text1: 'Enter valid email',
       });
       return;
     }
 
     if (!form.password.trim()) {
       Toast.show({
-        type: "error",
-        text1: "Password is required",
+        type: 'error',
+        text1: 'Password is required',
       });
       return;
     }
 
     if (form.password.length < 6) {
       Toast.show({
-        type: "error",
+        type: 'error',
         text1:
-          "Password must be at least 6 characters",
+          'Password must be at least 6 characters',
       });
       return;
     }
@@ -83,7 +86,7 @@ export default function SignupScreen() {
       setLoading(true);
 
       await signup(
-        form.name,
+        form.fullName,
         form.email,
         form.password
       );
@@ -93,180 +96,217 @@ export default function SignupScreen() {
   };
 
   return (
-    <KeyboardAwareScrollView
-      style={[
-        styles.wrapper,
-        {
-          backgroundColor: theme.bg,
-        },
-      ]}
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
-      enableOnAndroid={true}
-      extraScrollHeight={
-        Platform.OS === "ios" ? 20 : 80
-      }
+    <ImageBackground
+      source={{
+        uri: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061',
+      }}
+      style={styles.bg}
+      resizeMode="cover"
     >
-      <View style={styles.top}>
-        <ThemeToggle />
-      </View>
-
-      <Text
-        style={[
-          styles.title,
-          {
-            color: theme.text,
-          },
+      <LinearGradient
+        colors={[
+          'rgba(0,0,0,0.2)',
+          'rgba(0,0,0,0.85)',
         ]}
+        style={styles.overlay}
       >
-        Create Account 🚀
-      </Text>
-
-      {(Object.keys(form) as (keyof SignupForm)[]).map(
-        (field) => (
-          <View
-            key={field}
-            style={[
-              styles.inputBox,
-              {
-                backgroundColor: theme.card,
-              },
-            ]}
-          >
-            <TextInput
-              placeholder={field.toUpperCase()}
-              placeholderTextColor={
-                theme.subText
-              }
-              secureTextEntry={
-                field === "password"
-              }
-              autoCapitalize={
-                field === "email"
-                  ? "none"
-                  : "sentences"
-              }
-              keyboardType={
-                field === "email"
-                  ? "email-address"
-                  : "default"
-              }
-              value={form[field]}
-              onChangeText={(val) =>
-                setForm({
-                  ...form,
-                  [field]: val,
-                })
-              }
-              style={[
-                styles.input,
-                {
-                  color: theme.text,
-                },
-              ]}
-            />
-          </View>
-        )
-      )}
-
-      <TouchableOpacity
-        style={[
-          styles.button,
-          {
-            backgroundColor: theme.primary,
-          },
-        ]}
-        onPress={handleSignup}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>
-            Sign Up
-          </Text>
-        )}
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        onPress={() =>
-          router.push("/(auth)/login")
-        }
-      >
-        <Text
-          style={[
-            styles.link,
-            {
-              color: theme.subText,
-            },
-          ]}
+        <KeyboardAwareScrollView
+          contentContainerStyle={
+            styles.container
+          }
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          enableOnAndroid={true}
+          extraScrollHeight={
+            Platform.OS === 'ios'
+              ? 20
+              : 80
+          }
         >
-          Already have an account?{" "}
-          <Text
-            style={{
-              color: theme.primary,
-            }}
-          >
-            Login
-          </Text>
-        </Text>
-      </TouchableOpacity>
-    </KeyboardAwareScrollView>
+          <View style={styles.card}>
+            <Text style={styles.logo}>
+              NutriChef 🍽️
+            </Text>
+
+            <Text style={styles.title}>
+              Create Account
+            </Text>
+
+            <Text style={styles.subtitle}>
+              Start your healthy meal journey today
+            </Text>
+
+            <View style={styles.inputBox}>
+              <TextInput
+                placeholder="Full Name"
+                placeholderTextColor="#999"
+                value={form.fullName}
+                onChangeText={(value) =>
+                  setForm({
+                    ...form,
+                    fullName: value,
+                  })
+                }
+                style={styles.input}
+                underlineColorAndroid="transparent"
+              />
+            </View>
+
+            <View style={styles.inputBox}>
+              <TextInput
+                placeholder="Email"
+                placeholderTextColor="#999"
+                value={form.email}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                onChangeText={(value) =>
+                  setForm({
+                    ...form,
+                    email: value,
+                  })
+                }
+                style={styles.input}
+                underlineColorAndroid="transparent"
+              />
+            </View>
+
+            <View style={styles.inputBox}>
+              <TextInput
+                placeholder="Password"
+                placeholderTextColor="#999"
+                secureTextEntry
+                value={form.password}
+                onChangeText={(value) =>
+                  setForm({
+                    ...form,
+                    password: value,
+                  })
+                }
+                style={styles.input}
+                underlineColorAndroid="transparent"
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleSignup}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>
+                  Sign Up
+                </Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() =>
+                router.push('/(auth)/login')
+              }
+            >
+              <Text style={styles.link}>
+                Already have an account?{' '}
+                <Text style={styles.linkBold}>
+                  Login
+                </Text>
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAwareScrollView>
+      </LinearGradient>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
+  bg: {
     flex: 1,
+  },
+
+  overlay: {
+    flex: 1,
+    justifyContent: 'center',
   },
 
   container: {
     flexGrow: 1,
+    justifyContent: 'center',
     padding: 24,
-    paddingTop: 170,
-    paddingBottom: 20,
   },
 
-  top: {
-    position: "absolute",
-    top: 60,
-    right: 20,
-    zIndex: 10,
+  card: {
+    backgroundColor:
+      'rgba(255,255,255,0.12)',
+    borderRadius: 28,
+    padding: 28,
+    borderWidth: 1,
+    borderColor:
+      'rgba(255,255,255,0.18)',
+  },
+
+  logo: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#fff',
+    textAlign: 'center',
   },
 
   title: {
     fontSize: 28,
-    fontWeight: "700",
-    marginBottom: 10,
+    fontWeight: '700',
+    color: '#fff',
+    marginTop: 20,
+  },
+
+  subtitle: {
+    fontSize: 14,
+    color: '#ddd',
+    marginTop: 8,
+    marginBottom: 24,
   },
 
   inputBox: {
-    marginTop: 16,
+    backgroundColor: '#fff',
     borderRadius: 16,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    marginTop: 16,
+    height: 56,
+    justifyContent: 'center',
+    borderWidth: 0,
+    elevation: 0,
+    shadowOpacity: 0,
   },
 
   input: {
     fontSize: 16,
+    color: '#111',
   },
 
   button: {
-    marginTop: 30,
+    marginTop: 28,
+    backgroundColor: '#22C55E',
     paddingVertical: 16,
-    borderRadius: 16,
-    alignItems: "center",
+    borderRadius: 18,
+    alignItems: 'center',
   },
 
   buttonText: {
-    color: "#fff",
-    fontWeight: "600",
+    color: '#fff',
     fontSize: 16,
+    fontWeight: '700',
   },
 
   link: {
-    marginTop: 20,
-    textAlign: "center",
+    marginTop: 22,
+    textAlign: 'center',
+    color: '#ddd',
+  },
+
+  linkBold: {
+    color: '#22C55E',
+    fontWeight: '700',
   },
 });
+

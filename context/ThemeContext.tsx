@@ -1,60 +1,68 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react';
 
-type ThemeMode = "light" | "dark";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Colors } from '@/constants/theme';
 
-type ThemeColors = {
-  bg: string;
-  text: string;
-  subText: string;
-  card: string;
-  primary: string;
-};
+type ThemeMode = 'light' | 'dark';
 
 type ThemeContextType = {
-  theme: ThemeColors;
+  theme: typeof Colors.light;
   mode: ThemeMode;
   toggleTheme: () => void;
 };
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
 
-const COLORS: Record<ThemeMode, ThemeColors> = {
-  light: {
-    bg: "#F9FAFB",
-    text: "#111827",
-    subText: "#6B7280",
-    card: "#FFFFFF",
-    primary: "#22C55E",
-  },
-  dark: {
-    bg: "#0F172A",
-    text: "#F1F5F9",
-    subText: "#94A3B8",
-    card: "#1E293B",
-    primary: "#22C55E",
-  },
-};
-
-export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const [mode, setMode] = useState<ThemeMode>("light");
+export const ThemeProvider = ({
+  children,
+}: {
+  children: ReactNode;
+}) => {
+  const [mode, setMode] = useState<ThemeMode>('light');
 
   useEffect(() => {
     const loadTheme = async () => {
-      const saved = await AsyncStorage.getItem("theme");
-      if (saved) setMode(saved as ThemeMode);
+      const savedTheme = await AsyncStorage.getItem('theme');
+
+      if (
+        savedTheme &&
+        (savedTheme === 'light' || savedTheme === 'dark')
+      ) {
+        setMode(savedTheme);
+      }
     };
+
     loadTheme();
   }, []);
 
   const toggleTheme = async () => {
-    const newMode = mode === "light" ? "dark" : "light";
+    const newMode =
+      mode === 'light'
+        ? 'dark'
+        : 'light';
+
     setMode(newMode);
-    await AsyncStorage.setItem("theme", newMode);
+
+    await AsyncStorage.setItem(
+      'theme',
+      newMode
+    );
   };
 
   return (
-    <ThemeContext.Provider value={{ theme: COLORS[mode], mode, toggleTheme }}>
+    <ThemeContext.Provider
+      value={{
+        theme: Colors[mode],
+        mode,
+        toggleTheme,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );
@@ -62,6 +70,12 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
 export const useThemeContext = () => {
   const context = useContext(ThemeContext);
-  if (!context) throw new Error("useThemeContext must be used inside ThemeProvider");
+
+  if (!context) {
+    throw new Error(
+      'useThemeContext must be used inside ThemeProvider'
+    );
+  }
+
   return context;
 };
