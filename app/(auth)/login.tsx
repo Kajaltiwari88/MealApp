@@ -1,19 +1,19 @@
 import React, { useState } from "react";
 import {
   ActivityIndicator,
+  ImageBackground,
   Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  ImageBackground,
 } from "react-native";
 
-import { useRouter } from "expo-router";
-import Toast from "react-native-toast-message";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import Toast from "react-native-toast-message";
 
 import { useAuth } from "@/context/AuthContext";
 
@@ -183,6 +183,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#fff",
     marginTop: 20,
+    textAlign: "center",
   },
 
   subtitle: {
@@ -190,6 +191,7 @@ const styles = StyleSheet.create({
     color: "#ddd",
     marginTop: 8,
     marginBottom: 24,
+    textAlign: "center",
   },
 
   inputBox: {

@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 
 const WEB_URL = "http://localhost:8086";
 
-const MOBILE_URL = "http://10.179.33.36:8086";
+const MOBILE_URL = "http://10.253.23.36:8086";
 
 const BASE_URL =
   Platform.OS === "web"

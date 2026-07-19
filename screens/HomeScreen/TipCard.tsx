@@ -1,39 +1,28 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-} from 'react-native';
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
 
-import { useThemeContext } from '@/context/ThemeContext';
+import { useThemeContext } from "@/context/ThemeContext";
 
 const tips = [
-  'Drink water before meals 🍋',
-  'Avoid overcooking vegetables 🥦',
-  'Use olive oil for healthier meals 🫒',
-  'Fresh herbs improve flavor 🌿',
-  'Eat protein-rich breakfast 🍳',
+  "Drink water before meals 🍋",
+  "Avoid overcooking vegetables 🥦",
+  "Use olive oil for healthier meals 🫒",
+  "Fresh herbs improve flavor 🌿",
+  "Eat protein-rich breakfast 🍳",
 ];
 
 export default function TipCard() {
   const { theme } = useThemeContext();
 
-  const randomTip =
-    tips[
-      Math.floor(
-        Math.random() * tips.length
-      )
-    ];
+  const randomTip = tips[Math.floor(Math.random() * tips.length)];
 
   return (
     <View
       style={[
         styles.card,
         {
-          backgroundColor:
-            theme.card,
-          borderColor:
-            theme.border,
+          backgroundColor: theme.card,
+          borderColor: theme.border,
         },
       ]}
     >
@@ -52,8 +41,7 @@ export default function TipCard() {
         style={[
           styles.tip,
           {
-            color:
-              theme.subText,
+            color: theme.subText,
           },
         ]}
       >
@@ -72,7 +60,7 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 
   tip: {

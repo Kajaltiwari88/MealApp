@@ -84,10 +84,6 @@ export default function HomeScreen() {
           selectedCategory={
             selectedCategory
           }
-
-          /*
-            IMPORTANT FIX
-          */
           setSelectedRecipe={
             setSelectedRecipe
           }

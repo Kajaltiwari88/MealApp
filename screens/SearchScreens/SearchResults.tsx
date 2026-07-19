@@ -1,14 +1,8 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import React from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-import { useThemeContext } from '@/context/ThemeContext';
-import ShimmerLoader from '@/components/ReusableShimmer';
+import ShimmerLoader from "@/components/ReusableShimmer";
+import { useThemeContext } from "@/context/ThemeContext";
 
 type MealType = {
   idMeal: string;
@@ -22,9 +16,7 @@ type MealType = {
 type Props = {
   results: MealType[];
   loading?: boolean;
-  setSelectedRecipe: (
-    item: MealType
-  ) => void;
+  setSelectedRecipe: (item: MealType) => void;
 };
 
 export default function SearchResults({
@@ -38,15 +30,8 @@ export default function SearchResults({
     return (
       <View style={styles.container}>
         {[1, 2, 3].map((item) => (
-          <View
-            key={item}
-            style={styles.shimmerCard}
-          >
-            <ShimmerLoader
-              height={80}
-              width={80}
-              borderRadius={14}
-            />
+          <View key={item} style={styles.shimmerCard}>
+            <ShimmerLoader height={80} width={80} borderRadius={14} />
 
             <View style={{ flex: 1 }}>
               <ShimmerLoader
@@ -65,10 +50,7 @@ export default function SearchResults({
                 }}
               />
 
-              <ShimmerLoader
-                height={14}
-                width="40%"
-              />
+              <ShimmerLoader height={14} width="40%" />
             </View>
           </View>
         ))}
@@ -77,7 +59,20 @@ export default function SearchResults({
   }
 
   if (!results?.length) {
-    return null;
+    return (
+      <Text
+        style={[
+          styles.title,
+          {
+            color: theme.text,
+            marginBlock: 20,
+            textAlign: "center",
+          },
+        ]}
+      >
+        No results
+      </Text>
+    );
   }
 
   return (
@@ -93,25 +88,21 @@ export default function SearchResults({
         Search Results
       </Text>
 
-      {results.map((item) => (
+      {results?.map((item) => (
         <TouchableOpacity
-          key={item.idMeal}
-          onPress={() =>
-            setSelectedRecipe(item)
-          }
+          key={item?.idMeal}
+          onPress={() => setSelectedRecipe(item)}
           style={[
             styles.card,
             {
-              backgroundColor:
-                theme.card,
-              borderColor:
-                theme.border,
+              backgroundColor: theme.card,
+              borderColor: theme.border,
             },
           ]}
         >
           <Image
             source={{
-              uri: item.strMealThumb,
+              uri: item?.strMealThumb,
             }}
             style={styles.image}
           />
@@ -125,25 +116,23 @@ export default function SearchResults({
                 },
               ]}
             >
-              {item.strMeal}
+              {item?.strMeal}
             </Text>
 
             <Text
               style={{
-                color:
-                  theme.subText,
+                color: theme.subText,
               }}
             >
-              {item.strCategory}
+              {item?.strCategory}
             </Text>
 
             <Text
               style={{
-                color:
-                  theme.subText,
+                color: theme.subText,
               }}
             >
-              {item.strArea}
+              {item?.strArea}
             </Text>
           </View>
         </TouchableOpacity>
@@ -159,15 +148,15 @@ const styles = StyleSheet.create({
 
   heading: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 14,
   },
 
   shimmerCard: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 14,
     marginBottom: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
 
   card: {
@@ -175,8 +164,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 12,
     marginBottom: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
 
   image: {
@@ -192,7 +181,7 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 6,
   },
 });
