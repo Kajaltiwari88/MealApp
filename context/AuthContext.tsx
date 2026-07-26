@@ -54,14 +54,8 @@ export const AuthProvider = ({ children }: any) => {
 
       const userData = res?.data?.user || {};
 
-      if (!accessToken) {
-        throw new Error("Access token missing");
-      }
-
-      await saveItem("accessToken", String(accessToken));
-
-      await saveItem("refreshToken", String(refreshToken));
-
+      await saveItem("accessToken", accessToken);
+      await saveItem("refreshToken", refreshToken);
       await saveItem("user", JSON.stringify(userData));
 
       setToken(accessToken);

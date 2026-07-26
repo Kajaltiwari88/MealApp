@@ -1,20 +1,26 @@
-import React, {
-  useEffect,
-  useState,
-} from 'react';
-
+import React, { useEffect, useState } from "react";
 import {
-  Text,
+  Alert,
   Image,
   ScrollView,
   StyleSheet,
+  Text,
   TouchableOpacity,
-} from 'react-native';
+  View,
+} from "react-native";
 
-import * as Speech from 'expo-speech';
-import * as Linking from 'expo-linking';
+import Ionicons from "@expo/vector-icons/Ionicons";
+import * as Linking from "expo-linking";
+import * as Speech from "expo-speech";
 
-import { useThemeContext } from '@/context/ThemeContext';
+import { useAuth } from "@/context/AuthContext";
+import { useThemeContext } from "@/context/ThemeContext";
+import {
+  useAddFavoriteMutation,
+  useGetFavoritesQuery,
+  useRemoveFavoriteMutation,
+} from "@/store/services/favoriteApi";
+import { getItem } from "@/utils/secureStorage";
 
 type MealType = {
   idMeal: string;
@@ -32,52 +38,70 @@ type Props = {
   onBack: () => void;
 };
 
-export default function RecipeDetailsScreen({
-  meal,
-  onBack,
-}: Props) {
+export default function RecipeDetailsScreen({ meal, onBack }: Props) {
   const { theme } = useThemeContext();
-
-  const [isSpeaking, setIsSpeaking] =
-    useState<boolean>(false);
+  const { data } = useGetFavoritesQuery();
+  const [addFavorite] = useAddFavoriteMutation();
+  const [removeFavorite] = useRemoveFavoriteMutation();
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const { token } = useAuth();
+  console.log("Context token:", token);
 
   useEffect(() => {
-    return () => {
-      Speech.stop();
+    const loadToken = async () => {
+      console.log("Context token:", token);
+
+      const storageToken = await getItem("accessToken");
+      console.log("Storage token:", storageToken);
     };
-  }, []);
 
-  const getIngredientsWithMeasures =
-    () => {
-      const items: string[] = [];
+    loadToken();
+  }, [token]);
 
-      for (
-        let i = 1;
-        i <= 20;
-        i++
-      ) {
-        const ingredient =
-          meal[
-            `strIngredient${i}`
-          ];
+  useEffect(() => {
+    if (data?.data) {
+      const exists = data.data.some((item: any) => item.mealId === meal.idMeal);
 
-        const measure =
-          meal[
-            `strMeasure${i}`
-          ];
+      setSaved(exists);
+    }
+  }, [data, meal.idMeal]);
 
-        if (
-          ingredient &&
-          ingredient.trim()
-        ) {
-          items.push(
-            `${measure || ''} ${ingredient}`.trim()
-          );
-        }
+  const toggleFavorite = async () => {
+    console.log("Token before API:", await getItem("accessToken"));
+    try {
+      if (saved) {
+        await removeFavorite(meal.idMeal).unwrap();
+        setSaved(false);
+      } else {
+        await addFavorite({
+          mealId: meal.idMeal,
+          mealName: meal.strMeal,
+          mealImage: meal.strMealThumb,
+          category: meal.strCategory,
+        }).unwrap();
+
+        setSaved(true);
       }
+    } catch (error) {
+      Alert.alert("Error", "Unable to update favorites.");
+    }
+  };
 
-      return items;
-    };
+  const getIngredientsWithMeasures = () => {
+    const items: string[] = [];
+
+    for (let i = 1; i <= 20; i++) {
+      const ingredient = meal[`strIngredient${i}`];
+      const measure = meal[`strMeasure${i}`];
+
+      if (ingredient && ingredient.trim()) {
+        items.push(`${measure || ""} ${ingredient}`.trim());
+      }
+    }
+
+    return items;
+  };
 
   const handleListen = () => {
     if (isSpeaking) {
@@ -86,50 +110,35 @@ export default function RecipeDetailsScreen({
       return;
     }
 
-    const ingredientsText =
-      getIngredientsWithMeasures().join(
-        ', '
-      );
+    const ingredientsText = getIngredientsWithMeasures().join(", ");
 
     const fullRecipeText = `
-      Recipe Name ${meal.strMeal}.
-      Category ${meal.strCategory}.
-      Cuisine ${meal.strArea}.
+      Recipe Name ${meal?.strMeal}.
+      Category ${meal?.strCategory}.
+      Cuisine ${meal?.strArea}.
       Ingredients ${ingredientsText}.
-      Instructions ${meal.strInstructions}
+      Instructions ${meal?.strInstructions}
     `;
 
     setIsSpeaking(true);
 
-    Speech.speak(
-      fullRecipeText,
-      {
-        language: 'en',
-        pitch: 1,
-        rate: 0.9,
-        onDone: () =>
-          setIsSpeaking(false),
-      }
-    );
+    Speech.speak(fullRecipeText, {
+      language: "en",
+      pitch: 1,
+      rate: 0.9,
+      onDone: () => setIsSpeaking(false),
+    });
   };
 
-  const handleOpenVideo =
-    async () => {
-      if (!meal?.strYoutube)
-        return;
+  const handleOpenVideo = async () => {
+    if (!meal?.strYoutube) return;
 
-      try {
-        await Linking.openURL(
-          meal.strYoutube
-        );
-      } catch (error) {
-        
-        console.log(
-          'VIDEO OPEN ERROR:',
-          error
-        );
-      }
-    };
+    try {
+      await Linking.openURL(meal?.strYoutube);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleBack = () => {
     Speech.stop();
@@ -142,33 +151,34 @@ export default function RecipeDetailsScreen({
       style={[
         styles.container,
         {
-          backgroundColor:
-            theme.background,
+          backgroundColor: theme.background,
         },
       ]}
-      showsVerticalScrollIndicator={
-        false
-      }
-      contentContainerStyle={
-        styles.content
-      }
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
     >
-      <TouchableOpacity
-        onPress={handleBack}
-        style={styles.backButton}
-      >
-        <Text
-          style={[
-            styles.backText,
-            {
-              color:
-                theme.primary,
-            },
-          ]}
-        >
-          ← Back to Search
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={handleBack}>
+          <Text
+            style={[
+              styles.backText,
+              {
+                color: theme.primary,
+              },
+            ]}
+          >
+            ← Back to Search
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={toggleFavorite}>
+          <Ionicons
+            name={saved ? "heart" : "heart-outline"}
+            size={30}
+            color={saved ? "#ff3b30" : theme.text}
+          />
+        </TouchableOpacity>
+      </View>
 
       <Image
         source={{
@@ -192,13 +202,11 @@ export default function RecipeDetailsScreen({
         style={[
           styles.meta,
           {
-            color:
-              theme.subText,
+            color: theme.subText,
           },
         ]}
       >
-        {meal?.strCategory} •{' '}
-        {meal?.strArea}
+        {meal?.strCategory} • {meal?.strArea}
       </Text>
 
       <TouchableOpacity
@@ -206,32 +214,23 @@ export default function RecipeDetailsScreen({
         style={[
           styles.listenButton,
           {
-            backgroundColor:
-              theme.primary,
+            backgroundColor: theme.primary,
           },
         ]}
       >
-        <Text
-          style={styles.listenText}
-        >
-          {isSpeaking
-            ? '|| Stop Listening'
-            : '▶ Listen Full Recipe'}
+        <Text style={styles.listenText}>
+          {isSpeaking ? "|| Stop Listening" : "▶ Listen Full Recipe"}
         </Text>
       </TouchableOpacity>
 
-      {meal?.strYoutube ? (
+      {meal?.strYoutube && (
         <TouchableOpacity
-          onPress={
-            handleOpenVideo
-          }
+          onPress={handleOpenVideo}
           style={[
             styles.videoButton,
             {
-              backgroundColor:
-                theme.card,
-              borderColor:
-                theme.border,
+              backgroundColor: theme.card,
+              borderColor: theme.border,
             },
           ]}
         >
@@ -239,15 +238,14 @@ export default function RecipeDetailsScreen({
             style={[
               styles.videoText,
               {
-                color:
-                  theme.text,
+                color: theme.text,
               },
             ]}
           >
             ▶ Watch Recipe Video
           </Text>
         </TouchableOpacity>
-      ) : null}
+      )}
 
       <Text
         style={[
@@ -260,25 +258,19 @@ export default function RecipeDetailsScreen({
         Ingredients
       </Text>
 
-      {getIngredientsWithMeasures().map(
-        (
-          item,
-          index
-        ) => (
-          <Text
-            key={index}
-            style={[
-              styles.detailText,
-              {
-                color:
-                  theme.text,
-              },
-            ]}
-          >
-            • {item}
-          </Text>
-        )
-      )}
+      {getIngredientsWithMeasures().map((item, index) => (
+        <Text
+          key={index}
+          style={[
+            styles.detailText,
+            {
+              color: theme.text,
+            },
+          ]}
+        >
+          • {item}
+        </Text>
+      ))}
 
       <Text
         style={[
@@ -315,18 +307,21 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
 
-  backButton: {
+  header: {
     marginTop: 10,
     marginBottom: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
 
   backText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 
   image: {
-    width: '100%',
+    width: "100%",
     height: 280,
     borderRadius: 18,
   },
@@ -334,7 +329,7 @@ const styles = StyleSheet.create({
   title: {
     marginTop: 18,
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 
   meta: {
@@ -346,12 +341,12 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingVertical: 14,
     borderRadius: 14,
-    alignItems: 'center',
+    alignItems: "center",
   },
 
   listenText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: "#fff",
+    fontWeight: "600",
     fontSize: 15,
   },
 
@@ -359,12 +354,12 @@ const styles = StyleSheet.create({
     marginTop: 14,
     paddingVertical: 14,
     borderRadius: 14,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
   },
 
   videoText: {
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 15,
   },
 
@@ -372,7 +367,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 12,
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 
   detailText: {

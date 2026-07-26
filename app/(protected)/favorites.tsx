@@ -1,10 +1,6 @@
-import React from 'react';
-import { View, Text } from 'react-native';
+import FavoritesScreen from "@/screens/favScreen";
+import React from "react";
 
-export default function Favorites() {
-  return (
-    <View>
-      <Text>Favorites Screen</Text>
-    </View>
-  );
+export default function Search() {
+  return <FavoritesScreen />;
 }
