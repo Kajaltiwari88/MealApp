@@ -2,8 +2,8 @@ import { getItem } from "@/utils/secureStorage";
 import { fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { Platform } from "react-native";
 
-const WEB_URL = "http://localhost:8086";
-const MOBILE_URL = "http://10.202.115.36:8086";
+const WEB_URL =process.env.EXPO_WEB_URL;
+const MOBILE_URL =process.env.EXPO_MOBILE_URL;
 
 const BASE_URL = Platform.OS === "web" ? WEB_URL : MOBILE_URL;
 
